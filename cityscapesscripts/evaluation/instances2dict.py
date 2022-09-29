@@ -10,7 +10,10 @@ import os, sys
 from cityscapesscripts.evaluation.instance import *
 from cityscapesscripts.helpers.csHelpers import *
 
-def instances2dict(imageFileList, verbose=False):
+import zarr
+
+
+def instances2dict(imageFileList, verbose=False, key=None):
     imgCount     = 0
     instanceDict = {}
 
@@ -22,7 +25,11 @@ def instances2dict(imageFileList, verbose=False):
 
     for imageFileName in imageFileList:
         # Load image
-        img = Image.open(imageFileName)
+
+        if os.path.splitext(imageFileName)[-1] == ".zarr":
+            img = np.array(zarr.open(imageFileName, 'r')[key])
+        else:
+            img = Image.open(imageFileName)
 
         # Image as numpy array
         imgNp = np.array(img)
@@ -33,10 +40,25 @@ def instances2dict(imageFileList, verbose=False):
             instances[label.name] = []
 
         # Loop through all instance ids in instance image
-        for instanceId in np.unique(imgNp):
-            instanceObj = Instance(imgNp, instanceId)
+        if key is None:
+            for instanceId in np.unique(imgNp):
+                instanceObj = Instance(imgNp, instanceId)
 
-            instances[id2label[instanceObj.labelID].name].append(instanceObj.toDict())
+                instances[id2label[instanceObj.labelID].name].append(instanceObj.toDict())
+        elif key == 'volumes/gt_instances':
+            for instanceId in np.unique(imgNp):
+                if instanceId == 0:
+                    continue
+                instanceObj = Instance(imgNp, instanceId)
+
+                instances[id2label[instanceObj.labelID].name].append(instanceObj.toDict())
+        elif key == 'volumes/gt_labels':
+            for idx in range(imgNp.shape[0]):
+                instanceId = idx + 1
+                img = imgNp[idx]*instanceId
+                instanceObj = Instance(img, instanceId)
+
+                instances[id2label[instanceObj.labelID].name].append(instanceObj.toDict())
 
         imgKey = os.path.abspath(imageFileName)
         instanceDict[imgKey] = instances

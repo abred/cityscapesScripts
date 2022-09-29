@@ -43,6 +43,8 @@ from copy import deepcopy
 from cityscapesscripts.helpers.csHelpers import *
 from cityscapesscripts.evaluation.instances2dict import instances2dict
 
+import zarr
+
 
 ###################################
 # PLEASE READ THESE INSTRUCTIONS!!!
@@ -184,7 +186,11 @@ def readPredInfo(predInfoFileName,args):
 
 # Routine to read ground truth image
 def readGTImage(gtImageFileName,args):
-    return Image.open(gtImageFileName)
+    if os.path.splitext(gtImageFileName)[-1] == ".zarr":
+        img = np.array(zarr.open(gtImageFileName, 'r')[args.key])
+    else:
+        img = Image.open(gtImageFileName)
+    return img
 
 # either read or compute a dictionary of all ground truth instances
 def getGtInstances(groundTruthList,args):
@@ -199,7 +205,7 @@ def getGtInstances(groundTruthList,args):
     else:
         if (not args.quiet):
             print("Creating ground truth instances from png files.")
-        gtInstances = instances2dict(groundTruthList,not args.quiet)
+        gtInstances = instances2dict(groundTruthList, not args.quiet, key=args.key)
         writeDict2JSON(gtInstances, args.gtInstancesFile)
 
     return gtInstances
@@ -325,7 +331,11 @@ def assignGt2Preds(gtInstancesOrig, gtImage, predInfo, args):
         # However, for now we treat both the same and do the rest later
         for (gtNum,gtInstance) in enumerate(gtInstancesOrig[labelName]):
 
-            intersection = np.count_nonzero( np.logical_and( gtNp == gtInstance["instID"] , boolPredInst) )
+            if args.key == 'volumes/gt_instances':
+                boolGtInst = gtNp == gtInstance["instID"]
+            elif args.key == 'volumes/gt_labels':
+                boolGtInst = (gtNp[gtNum] != 0)
+            intersection = np.count_nonzero( np.logical_and(boolGtInst, boolPredInst) )
 
             # If they intersect add them as matches to both dicts
             if (intersection > 0):
