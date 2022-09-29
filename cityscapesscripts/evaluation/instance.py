@@ -18,6 +18,7 @@ class Instance(object):
         self.pixelCount = int(self.getInstancePixels(imgNp, instID))
 
     def getLabelID(self, instID):
+        return 24  # person
         if (instID < 1000):
             return instID
         else:

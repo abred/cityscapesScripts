@@ -154,10 +154,10 @@ args.predictionWalk = None
 
 # Determine the labels that have instances
 def setInstanceLabels(args):
-    args.instLabels = []
-    for label in labels:
-        if label.hasInstances and not label.ignoreInEval:
-            args.instLabels.append(label.name)
+    args.instLabels = ['person']
+    # for label in labels:
+    #     if label.hasInstances and not label.ignoreInEval:
+    #         args.instLabels.append(label.name)
 
 # Read prediction info
 # imgFile, predId, confidence
@@ -443,7 +443,8 @@ def evaluateMatches(matches, args):
                     predInstances = matches[img]["prediction" ][labelName]
                     gtInstances   = matches[img]["groundTruth"][labelName]
                     # filter groups in ground truth
-                    gtInstances   = [ gt for gt in gtInstances if gt["instID"]>=1000 and gt["pixelCount"]>=minRegionSize and gt["medDist"]<=distanceTh and gt["distConf"]>=distanceConf ]
+                    if args.key is None:
+                        gtInstances   = [ gt for gt in gtInstances if gt["instID"]>=1000 and gt["pixelCount"]>=minRegionSize and gt["medDist"]<=distanceTh and gt["distConf"]>=distanceConf ]
 
                     if gtInstances:
                         haveGt = True
@@ -496,15 +497,18 @@ def evaluateMatches(matches, args):
                                 break
                         if not foundGt:
                             # collect number of void and *group pixels
-                            nbIgnorePixels = pred["voidIntersection"]
-                            for gt in pred["matchedGt"]:
-                                # group?
-                                if gt["instID"] < 1000:
-                                    nbIgnorePixels += gt["intersection"]
-                                # small ground truth instances
-                                if gt["pixelCount"] < minRegionSize or gt["medDist"]>distanceTh or gt["distConf"]<distanceConf:
-                                    nbIgnorePixels += gt["intersection"]
-                            proportionIgnore = float(nbIgnorePixels)/pred["pixelCount"]
+                            if args.key is None:
+                                nbIgnorePixels = pred["voidIntersection"]
+                                for gt in pred["matchedGt"]:
+                                    # group?
+                                    if gt["instID"] < 1000:
+                                        nbIgnorePixels += gt["intersection"]
+                                    # small ground truth instances
+                                    if gt["pixelCount"] < minRegionSize or gt["medDist"]>distanceTh or gt["distConf"]<distanceConf:
+                                        nbIgnorePixels += gt["intersection"]
+                                proportionIgnore = float(nbIgnorePixels)/pred["pixelCount"]
+                            else:
+                                proportionIgnore = 0
                             # if not ignored
                             # append false positive
                             if proportionIgnore <= overlapTh:
