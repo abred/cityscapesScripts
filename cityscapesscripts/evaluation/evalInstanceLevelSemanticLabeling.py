@@ -590,6 +590,16 @@ def computeAverages(aps,args):
     d50m  = np.where( np.isclose( args.distanceThs ,  50. ) )
     d100m = np.where( np.isclose( args.distanceThs , 100. ) )
     o50   = np.where(np.isclose(args.overlaps,0.5  ))
+    o5   = np.where(np.isclose(args.overlaps,0.5  ))
+    o55   = np.where(np.isclose(args.overlaps,0.55  ))
+    o6   = np.where(np.isclose(args.overlaps,0.6  ))
+    o65   = np.where(np.isclose(args.overlaps,0.65  ))
+    o7   = np.where(np.isclose(args.overlaps,0.7  ))
+    o75   = np.where(np.isclose(args.overlaps,0.75  ))
+    o8   = np.where(np.isclose(args.overlaps,0.8  ))
+    o85   = np.where(np.isclose(args.overlaps,0.85  ))
+    o9   = np.where(np.isclose(args.overlaps,0.9  ))
+    o95   = np.where(np.isclose(args.overlaps,0.95  ))
 
     avgDict = {}
     avgDict["allAp"]       = np.nanmean(aps[ dInf,:,:  ])
@@ -604,6 +614,16 @@ def computeAverages(aps,args):
     for (lI,labelName) in enumerate(args.instLabels):
         avgDict["classes"][labelName]             = {}
         avgDict["classes"][labelName]["ap"]       = np.average(aps[ dInf,lI,  :])
+        avgDict["classes"][labelName]["ap5"]       = np.average(aps[ dInf,lI,o5])
+        avgDict["classes"][labelName]["ap55"]       = np.average(aps[ dInf,lI,o55])
+        avgDict["classes"][labelName]["ap6"]       = np.average(aps[ dInf,lI,o6])
+        avgDict["classes"][labelName]["ap65"]       = np.average(aps[ dInf,lI,o65])
+        avgDict["classes"][labelName]["ap7"]       = np.average(aps[ dInf,lI,o7])
+        avgDict["classes"][labelName]["ap75"]       = np.average(aps[ dInf,lI,o75])
+        avgDict["classes"][labelName]["ap8"]       = np.average(aps[ dInf,lI,o8])
+        avgDict["classes"][labelName]["ap85"]       = np.average(aps[ dInf,lI,o85])
+        avgDict["classes"][labelName]["ap9"]       = np.average(aps[ dInf,lI,o9])
+        avgDict["classes"][labelName]["ap95"]       = np.average(aps[ dInf,lI,o95])
         avgDict["classes"][labelName]["ap50%"]    = np.average(aps[ dInf,lI,o50])
         if args.distanceAvailable:
             avgDict["classes"][labelName]["ap50m"]    = np.average(aps[ d50m,lI,  :])
@@ -628,6 +648,16 @@ def printResults(avgDict, args):
     line += "{:<15}".format("what"      ) + sep + col1
     line += "{:>15}".format("AP"        ) + sep
     line += "{:>15}".format("AP_50%"    ) + sep
+    line += "{:>15}".format("AP5"        ) + sep
+    line += "{:>15}".format("AP55"        ) + sep
+    line += "{:>15}".format("AP6"        ) + sep
+    line += "{:>15}".format("AP65"        ) + sep
+    line += "{:>15}".format("AP7"        ) + sep
+    line += "{:>15}".format("AP75"        ) + sep
+    line += "{:>15}".format("AP8"        ) + sep
+    line += "{:>15}".format("AP85"        ) + sep
+    line += "{:>15}".format("AP9"        ) + sep
+    line += "{:>15}".format("AP95"        ) + sep
     if args.distanceAvailable:
         line += "{:>15}".format("AP_50m"    ) + sep
         line += "{:>15}".format("AP_100m"   ) + sep
@@ -639,6 +669,16 @@ def printResults(avgDict, args):
 
     for (lI,labelName) in enumerate(args.instLabels):
         apAvg  = avgDict["classes"][labelName]["ap"]
+        ap5  = avgDict["classes"][labelName]["ap5"]
+        ap55  = avgDict["classes"][labelName]["ap55"]
+        ap6  = avgDict["classes"][labelName]["ap6"]
+        ap65  = avgDict["classes"][labelName]["ap65"]
+        ap7  = avgDict["classes"][labelName]["ap7"]
+        ap75  = avgDict["classes"][labelName]["ap75"]
+        ap8  = avgDict["classes"][labelName]["ap8"]
+        ap85  = avgDict["classes"][labelName]["ap85"]
+        ap9  = avgDict["classes"][labelName]["ap9"]
+        ap95  = avgDict["classes"][labelName]["ap95"]
         ap50o  = avgDict["classes"][labelName]["ap50%"]
         if args.distanceAvailable:
             ap50m  = avgDict["classes"][labelName]["ap50m"]
@@ -648,6 +688,16 @@ def printResults(avgDict, args):
         line  = "{:<15}".format(labelName) + sep + col1
         line += getColorEntry(apAvg , args) + sep + "{:>15.3f}".format(apAvg ) + sep
         line += getColorEntry(ap50o , args) + sep + "{:>15.3f}".format(ap50o ) + sep
+        line += getColorEntry(apAvg , args) + sep + "{:>15.3f}".format(ap5 ) + sep
+        line += getColorEntry(apAvg , args) + sep + "{:>15.3f}".format(ap55 ) + sep
+        line += getColorEntry(apAvg , args) + sep + "{:>15.3f}".format(ap6 ) + sep
+        line += getColorEntry(apAvg , args) + sep + "{:>15.3f}".format(ap65 ) + sep
+        line += getColorEntry(apAvg , args) + sep + "{:>15.3f}".format(ap7 ) + sep
+        line += getColorEntry(apAvg , args) + sep + "{:>15.3f}".format(ap75 ) + sep
+        line += getColorEntry(apAvg , args) + sep + "{:>15.3f}".format(ap8 ) + sep
+        line += getColorEntry(apAvg , args) + sep + "{:>15.3f}".format(ap85 ) + sep
+        line += getColorEntry(apAvg , args) + sep + "{:>15.3f}".format(ap9 ) + sep
+        line += getColorEntry(apAvg , args) + sep + "{:>15.3f}".format(ap95 ) + sep
         if args.distanceAvailable:
             line += getColorEntry(ap50m , args) + sep + "{:>15.3f}".format(ap50m ) + sep
             line += getColorEntry(ap100m, args) + sep + "{:>15.3f}".format(ap100m) + sep
@@ -713,7 +763,7 @@ def evaluateImgLists(predictionList, groundTruthList, args):
          # Print results
         printResults(avgDict, args)
 
-    return resDict
+    return avgDict
 
 # The main method
 def main():
