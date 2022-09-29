@@ -44,6 +44,9 @@ from cityscapesscripts.helpers.csHelpers import *
 from cityscapesscripts.evaluation.instances2dict import instances2dict
 
 import zarr
+from skimage.segmentation import relabel_sequential
+import numpy as np
+import h5py
 
 
 ###################################
@@ -162,6 +165,8 @@ def readPredInfo(predInfoFileName,args):
     predInfo = {}
     if (not os.path.isfile(predInfoFileName)):
         printError("Infofile '{}' for the predictions not found.".format(predInfoFileName))
+    elif os.path.splitext(predInfoFileName)[-1] == ".hdf":
+        return predInfoFileName
     with open(predInfoFileName, 'r') as f:
         for line in f:
             splittedLine         = line.split(" ")
@@ -285,11 +290,29 @@ def assignGt2Preds(gtInstancesOrig, gtImage, predInfo, args):
             voidLabelIDList.append(label.id)
     boolVoid = np.in1d(gtNp, voidLabelIDList).reshape(gtNp.shape)
 
+    if os.path.splitext(predInfo)[-1] == ".hdf":
+        with h5py.File(predInfo, 'r') as f:
+            pred_insts = np.array(f['vote_instances'])
+            pred_labels = np.squeeze(pred_insts)
+            pred_labels_rel, _, _ = relabel_sequential(pred_labels.astype(int))
+
+            pred_labels_squeezed = []
+            for lbl in pred_labels_rel:
+                if np.max(lbl) == 0:
+                    continue
+                pred_labels_squeezed.append(lbl)
+            predInfo = np.array(pred_labels_squeezed)
+
     # Loop through all prediction masks
     for predImageFile in predInfo:
-        # Additional prediction info
-        labelID  = predInfo[predImageFile]["labelID"]
-        predConf = predInfo[predImageFile]["conf"]
+        if isinstance(predImageFile, str):
+            # Additional prediction info
+            labelID  = predInfo[predImageFile]["labelID"]
+            predConf = predInfo[predImageFile]["conf"]
+        else:
+            predNp = predImageFile
+            labelID = 24
+            predConf = 1.0
 
         # label name
         labelName = id2label[int(labelID)].name
@@ -299,9 +322,10 @@ def assignGt2Preds(gtInstancesOrig, gtImage, predInfo, args):
             continue
 
         # Read the mask
-        predImage = Image.open(predImageFile)
-        predImage = predImage.convert("L")
-        predNp    = np.array(predImage)
+        if isinstance(predImageFile, str):
+            predImage = Image.open(predImageFile)
+            predImage = predImage.convert("L")
+            predNp    = np.array(predImage)
 
         # make the image really binary, i.e. everything non-zero is part of the prediction
         boolPredInst   = predNp != 0
@@ -313,7 +337,8 @@ def assignGt2Preds(gtInstancesOrig, gtImage, predInfo, args):
 
         # The information we want to collect for this instance
         predInstance = {}
-        predInstance["imgName"]          = predImageFile
+        if isinstance(predImageFile, str):
+            predInstance["imgName"]          = predImageFile
         predInstance["predID"]           = predInstCount
         predInstance["labelID"]          = int(labelID)
         predInstance["pixelCount"]       = predPixelCount
