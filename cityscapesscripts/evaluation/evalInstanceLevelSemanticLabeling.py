@@ -561,6 +561,8 @@ def evaluateMatches(matches, args):
 
                     # first point in curve is artificial
                     precision[-1] = 1.
+                    if args.fix_first_point:
+                        precision[-1] = precision[-2]
                     recall   [-1] = 0.
 
                     # compute average of precision-recall curve
